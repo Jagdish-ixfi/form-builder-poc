@@ -2,8 +2,24 @@ require('dotenv').config()
 const express = require('express')
 const database = require('./config/db')
 const http = require('http')
+var cors = require('cors');
 
 const app = express();
+app.use(cors());
+app.all('/*', function (req, res, next) {
+    // CORS headers
+    res.header("Access-Control-Allow-Origin", "*"); // restrict it to the required domain
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    // Set custom headers for CORS
+    res.header('Access-Control-Allow-Headers', 'Content-type,token');
+    if (req.method == 'OPTIONS') {
+        res
+            .status(200)
+            .end();
+    } else {
+        next();
+    }
+});
 app.use(express.json())
 //Routes
 // Config Router Grouping
@@ -14,7 +30,7 @@ express.application.prefix = express.Router.prefix = function (path, configure) 
     return router;
 };
 
-app.use('/', require('./routes') )
+app.use('/', require('./routes'))
 
 const port = normalizePort(process.env.PORT || 3000);
 app.set('port', port);
@@ -44,7 +60,7 @@ function onError(error) {
     console.log("Error while starting server", error);
 }
 
-function onListening(){
+function onListening() {
     const address = server.address();
     console.log("Server started on : ", address.port);
 }
