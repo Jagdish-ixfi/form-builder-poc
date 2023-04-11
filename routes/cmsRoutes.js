@@ -8,6 +8,7 @@ router.post('/create', form.createForm);
 router.get('/list', form.getForms);
 router.put('/update/:id', form.updateForm);
 router.get('/form/:id', form.formById);
-router.put('/resubmit', form.reSubmit)
+router.put('/resubmit', form.reSubmit);
+router.post('/histoy', form.history)
 
 module.exports = router;

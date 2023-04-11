@@ -96,10 +96,35 @@ const reSubmit = async (req, res) =>{
     }
 }
 
+
+const history = async (req, res) =>{
+    try {
+        const {formId, userId} = req.body;
+        if (!formId || !userId) {
+            res.status(400).send('Insufficient Paramaters')
+        }
+
+        const item = await userforms.findOne({
+            userId : userId,
+            formId : new mongoose.Types.ObjectId(formId)
+        });
+        res.json({
+            status : 200,
+            history: item,
+            message : 'From asked for resubmitted'
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Internal Server Error')
+    }
+}
+
 module.exports = {
     createForm,
     getForms,
     updateForm,
     formById,
-    reSubmit
+    reSubmit,
+    history,
 }

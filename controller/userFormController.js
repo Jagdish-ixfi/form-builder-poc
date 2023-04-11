@@ -81,7 +81,11 @@ const getUserForm = async (req, res) =>{
             formId : new mongoose.Types.ObjectId(formId),
         })
         if (!isUserFormPresent) {
-            res.status(200).send('No Form Present')
+            // res.status(200).send('No Form Present');
+            res.json({
+                status : 200,
+                message : 'No Form Present'
+            })
         }
 
         const isUserFormSubmitted = await userforms.exists({
@@ -98,7 +102,11 @@ const getUserForm = async (req, res) =>{
                 message : 'Form Created Successfully'
             })
         } else {
-            res.status(200).send('Form Already submitted')
+            // res.status(200).send('Form Already submitted');
+            res.json({
+                status : 200,
+                message : 'Form Already submitted'
+            })
         }
 
     } catch (error) {
