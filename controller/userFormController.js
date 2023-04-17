@@ -4,43 +4,48 @@ const forms = require('../schema/formSchema').forms
 
 const createUserForm = async (req, res) => {
     try {
-        const {userId, formId, filledFormData, submitted} = req.body;
+        const { userId, formId, filledFormData, submitted, isDraft } = req.body;
         if (!userId || !formId || !filledFormData) {
             res.status(400).send('Insufficient Paramaters')
         }
-        
+
         const userFormDone = await userforms.exists({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId),
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId),
             submitted: true
         });
 
         if (userFormDone) {
-            res.status(200).send('Form Already submitted')            
+            res.status(200).send('Form Already submitted')
         }
 
 
         const userFormSubmitted = await userforms.exists({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId),
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId),
             submitted: false
         })
 
         if (userFormSubmitted) {
             const data = {
-                filledFormData : filledFormData
+                filledFormData: filledFormData
             }
             if (req.body.hasOwnProperty('submitted')) {
                 data.submitted = submitted
             }
+            if (req.body.hasOwnProperty('isDraft')) {
+                data.isDraft = isDraft
+                data.submitted = !isDraft
+            }
 
             const updatedItem = await userforms.findOneAndUpdate({
-                userId : userId,
-                formId : new mongoose.Types.ObjectId(formId)}, data);
+                userId: userId,
+                formId: new mongoose.Types.ObjectId(formId)
+            }, data);
             res.json({
-                status : 200,
-                data : updatedItem,
-                message : 'Form Updated Successfully'
+                status: 200,
+                data: updatedItem,
+                message: 'Form Updated Successfully'
             })
         }
 
@@ -48,19 +53,32 @@ const createUserForm = async (req, res) => {
         // TODO: Check User not present
 
         const userFormExists = await userforms.exists({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId),
-        }); 
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId),
+        });
+
+        const form = await forms.findById(formId);
+
+        const ab = []
+        ab.push({ formData: filledFormData, title: form.title });
+
+        const data = {
+            userId,
+            formId,
+            filledFormData: ab,
+            submitted
+        }
 
         if (!userFormExists) {
-            const insertedItem = await userforms.create({...req.body});
+            const insertedItem = await userforms.create({ ...req.body });
+
             res.json({
-                status : 200,
-                data : insertedItem,
-                message : 'Form Created Successfully'
+                status: 200,
+                data: insertedItem,
+                message: 'Form Created Successfully'
             })
         }
-        
+
     } catch (error) {
         console.log(error)
         res.status(500).send('Internal Server Error')
@@ -69,48 +87,48 @@ const createUserForm = async (req, res) => {
 }
 
 // Get Draft Ones
-const getUserForm = async (req, res) =>{
+const getUserForm = async (req, res) => {
     try {
-        const {userId, formId} = req.body;
+        const { userId, formId } = req.body;
         if (!userId || !formId) {
             res.status(400).send('Insufficient Paramaters')
         }
 
         const isUserFormPresent = await userforms.exists({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId),
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId),
         })
         if (!isUserFormPresent) {
             // res.status(200).send('No Form Present');
             res.json({
-                status : 200,
-                message : 'No Form Present'
+                status: 200,
+                message: 'No Form Present'
             })
         }
-
         const isUserFormSubmitted = await userforms.exists({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId),
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId),
             submitted: false
         })
+
 
         if (isUserFormSubmitted) {
             const draftForm = await userforms.findById(isUserFormSubmitted._id);
             res.json({
-                status : 200,
-                data : draftForm,
-                message : 'Form Created Successfully'
+                status: 200,
+                data: draftForm,
+                message: 'Form Created Successfully'
             })
         } else {
             // res.status(200).send('Form Already submitted');
             res.json({
-                status : 200,
-                message : 'Form Already submitted'
+                status: 200,
+                message: 'Form Already submitted'
             })
         }
 
     } catch (error) {
-        
+
     }
 }
 
@@ -119,24 +137,37 @@ const getForm = async (req, res) => {
         if (!req.params.id) {
             res.status(400).send('Insufficient Paramaters')
         }
+
+        const isUserFormSubmitted = await userforms.findOne({
+            formId: new mongoose.Types.ObjectId(req.params.id),
+            submitted: true
+        })
+        if (isUserFormSubmitted) {
+            return res.json({
+                status: 200,
+                data: isUserFormSubmitted || {},
+                message: 'Form fetched Successfully'
+            })
+        }
+
         // TODO: check form not present
         const item = await forms.findById({
-            _id : new mongoose.Types.ObjectId(req.params.id),
-            published : true
+            _id: new mongoose.Types.ObjectId(req.params.id),
+            published: true,
         });
         if (item) {
             res.json({
-                status : 200,
-                data : item,
-                message : 'Form fetched Successfully'
+                status: 200,
+                data: item,
+                message: 'Form fetched Successfully'
             })
         } else {
             res.json({
-                status : 200,
-                message : 'Form Not Published'
+                status: 200,
+                message: 'Form Not Published'
             })
         }
-        
+
     } catch (error) {
         console.log(error)
     }

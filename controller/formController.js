@@ -4,15 +4,15 @@ const userforms = require('../schema/userFormSchema').userforms
 
 const createForm = async (req, res) => {
     try {
-        const {title, formData} = req.body;
+        const { title, formData } = req.body;
         if (!title || !formData) {
             res.status(400).send('Insufficient Paramaters')
         }
-        const insertedItem = await forms.create({...req.body});
+        const insertedItem = await forms.create({ ...req.body });
         res.json({
-            status : 200,
-            data : insertedItem,
-            message : 'Form Created Successfully'
+            status: 200,
+            data: insertedItem,
+            message: 'Form Created Successfully'
         })
     } catch (error) {
         console.log(error)
@@ -21,13 +21,13 @@ const createForm = async (req, res) => {
 
 }
 
-const getForms = async (req,res) =>{
+const getForms = async (req, res) => {
     try {
         const items = await forms.find({});
         res.json({
-            status : 200,
-            data : items,
-            message : 'Form Created Successfully'
+            status: 200,
+            data: items,
+            message: 'Form Created Successfully'
         })
     } catch (error) {
         console.log(error)
@@ -35,16 +35,16 @@ const getForms = async (req,res) =>{
     }
 }
 
-const updateForm = async (req,res) =>{
+const updateForm = async (req, res) => {
     try {
         if (!req.params.id) {
             res.status(400).send('Insufficient Paramaters')
         }
-        const updatedItem = await forms.findOneAndUpdate({_id : new mongoose.Types.ObjectId(req.params.id)}, {...req.body});
+        const updatedItem = await forms.findOneAndUpdate({ _id: new mongoose.Types.ObjectId(req.params.id) }, { ...req.body });
         res.json({
-            status : 200,
-            data : updatedItem,
-            message : 'Form Updated Successfully'
+            status: 200,
+            data: updatedItem,
+            message: 'Form Updated Successfully'
         })
     } catch (error) {
         console.log(error)
@@ -52,42 +52,42 @@ const updateForm = async (req,res) =>{
     }
 }
 
-const formById = async (req, res) =>{
+const formById = async (req, res) => {
     try {
         if (!req.params.id) {
             res.status(400).send('Insufficient Paramaters')
         }
-        const item = await forms.findById({_id : new mongoose.Types.ObjectId(req.params.id)});
+        const item = await forms.findById({ _id: new mongoose.Types.ObjectId(req.params.id) });
         res.json({
-            status : 200,
-            data : item,
-            message : 'Form fetched Successfully'
+            status: 200,
+            data: item,
+            message: 'Form fetched Successfully'
         })
     } catch (error) {
         console.log(error)
-    }  
+    }
 }
 
-const reSubmit = async (req, res) =>{
+const reSubmit = async (req, res) => {
     try {
-        const {formId, userId} = req.body;
+        const { formId, userId } = req.body;
         if (!formId || !userId) {
             res.status(400).send('Insufficient Paramaters')
         }
 
         const item = await userforms.findOne({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId)
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId)
         });
-
-        item.filledFormHistory.push(item.filledFormData);
+        item.filledFormHistory.push({ form: item.filledFormData, updated_at: item.updated_at, id: item.formId });
         item.reopned = true;
         item.submitted = false;
+        item.isDraft = false
         item.save();
 
         res.json({
-            status : 200,
-            message : 'From asked for resubmitted'
+            status: 200,
+            message: 'From asked for resubmitted'
         })
 
     } catch (error) {
@@ -97,21 +97,21 @@ const reSubmit = async (req, res) =>{
 }
 
 
-const history = async (req, res) =>{
+const history = async (req, res) => {
     try {
-        const {formId, userId} = req.body;
+        const { formId, userId } = req.body;
         if (!formId || !userId) {
             res.status(400).send('Insufficient Paramaters')
         }
 
         const item = await userforms.findOne({
-            userId : userId,
-            formId : new mongoose.Types.ObjectId(formId)
-        });
+            userId: userId,
+            formId: new mongoose.Types.ObjectId(formId)
+        }).populate('formId')
         res.json({
-            status : 200,
+            status: 200,
             history: item,
-            message : 'From asked for resubmitted'
+            message: 'From asked for resubmitted'
         })
 
     } catch (error) {
