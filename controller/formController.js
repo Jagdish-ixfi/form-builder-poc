@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { formHistory } = require('../schema/historySchema');
 const forms = require('../schema/formSchema').forms
 const userforms = require('../schema/userFormSchema').userforms
 
@@ -8,7 +9,6 @@ const createForm = async (req, res) => {
         if (!title || !formData) {
             res.status(400).send('Insufficient Paramaters')
         }
-        const insertedItem = await forms.create({ ...req.body });
         res.json({
             status: 200,
             data: insertedItem,
@@ -41,6 +41,22 @@ const updateForm = async (req, res) => {
             res.status(400).send('Insufficient Paramaters')
         }
         const updatedItem = await forms.findOneAndUpdate({ _id: new mongoose.Types.ObjectId(req.params.id) }, { ...req.body });
+        const isFormExist = await formHistory.findOne({
+            formId: new mongoose.Types.ObjectId(req.params.id),
+        })
+        let result = {};
+        isFormExist.formId = req.params.id
+        isFormExist.title = req.body.title;
+
+        if (isFormExist) {
+            isFormExist.formData.unshift({ ...req.body, updated_at: new Date() });
+            await isFormExist.save({ ...result });
+        } else {
+            result.formData = [];
+            result.formData.unshift({ ...req.body, updated_at: new Date() });
+            await formHistory.create({ ...result });
+
+        }
         res.json({
             status: 200,
             data: updatedItem,
@@ -120,6 +136,29 @@ const history = async (req, res) => {
     }
 }
 
+
+const formHistoryById = async (req, res) => {
+    try {
+        console.log(req.params.id)
+        if (!req.params.id) {
+            res.status(400).send('Insufficient Paramaters')
+        }
+        const { title, userInfo } = req.body;
+
+        const item = await formHistory.findOne({ formId: new mongoose.Types.ObjectId(req.params.id) });
+
+        res.json({
+            status: 200,
+            data: item,
+            message: 'Form fetched Successfully'
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Internal Server Error')
+    }
+}
+
 module.exports = {
     createForm,
     getForms,
@@ -127,4 +166,5 @@ module.exports = {
     formById,
     reSubmit,
     history,
+    formHistoryById
 }
